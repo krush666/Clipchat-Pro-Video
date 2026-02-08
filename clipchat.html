@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClipChat Pro - Video Intro Chat Bot</title>
+    <style>
+        /* CSS Variables for Customization */
+        :root {
+            --clipchat-primary: #6366f1;
+            --clipchat-primary-hover: #4f46e5;
+            --clipchat-accent: #ec4899;
+            --clipchat-bg: #ffffff;
+            --clipchat-surface: #f8fafc;
+            --clipchat-text: #1e293b;
+            --clipchat-text-secondary: #64748b;
+            --clipchat-border: #e2e8f0;
+            --clipchat-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            --clipchat-shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            --clipchat-radius: 24px;
+            --clipchat-radius-sm: 12px;
+            --clipchat-transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Reset and Base */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* Demo Content */
+        .demo-content {
+            max-width: 800px;
+            margin: 0 auto;
+            color: white;
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .demo-content h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            font-weight: 800;
+        }
+
+        .demo-content p {
+            font-size: 1.25rem;
+            opacity: 0.9;
+            line-height: 1.6;
+        }
+
+        /* ClipChat Pro Widget Container */
+        #clipchat-widget {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 999999;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        /* Collapsed State (Teaser) */
+        .clipchat-collapsed {
+            width: 180px;
+            height: 320px;
+            background: var(--clipchat-bg);
+            border-radius: var(--clipchat-radius);
+            box-shadow: var(--clipchat-shadow-lg);
+            overflow: hidden;
+            cursor: pointer;
+            transition: var(--clipchat-transition);
+            position: relative;
+            border: 3px solid rgba(255, 255, 255, 0.8);
+        }
+
+        .clipchat-collapsed:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.3);
+        }
+
+        /* iPhone Frame */
+        .clipchat-phone-frame {
+            width: 100%;
+            height: 100%;
+            background: #1a1a1a;
+            border-radius: var(--clipchat-radius);
+            padding: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .clipchat-phone-screen {
+            width: 100%;
+            height: 100%;
+            background: #000;
+            border-radius: calc(var(--clipchat-radius) - 6px);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .clipchat-phone-notch {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40%;
+            height: 20px;
+            background: #1a1a1a;
+            border-bottom-left-radius: 12px;
+            border-bottom-right-radius: 12px;
+            z-index: 10;
+        }
+
+        .clipchat-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        /* Overlay Label */
+        .clipchat-overlay-label {
+            position: absolute;
+            bottom: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            backdrop-filter: blur(10px);
+            z-index: 20;
+            white-space: nowrap;
+        }
+
+        .clipchat-overlay-label::before {
+            content: '▶';
+            font-size: 10px;
+        }
+
+        /* Close Button - Collapsed */
+        .clipchat-close-collapsed {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 28px;
+            height: 28px;
+            background: rgba(0, 0, 0, 0.5);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            line-height: 1;
+            z-index: 30;
+            transition: all 0.2s;
+            backdrop-filter: blur(4px);
+        }
+
+        .clipchat-close-collapsed:hover {
+            background: rgba(0, 0, 0, 0.8);
+            transform: scale(1.1);
+        }
+
+        /* Expanded State */
+        .clipchat-expanded {
+            width: 380px;
+            height: 680px;
+            max-height: 90vh;
+            background: var(--clipchat-bg);
+            border-radius: var(--clipchat-radius);
+            box-shadow: var(--clipchat-shadow-lg);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            animation: clipchatExpand 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes clipchatExpand {
+            from {
+                opacity: 0;
+                transform: scale(0.9) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        /* Video State Header */
+        .clipchat-video-header {
+            display: flex;
+            justify-content: flex-end;
+            padding: 12px;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.4), transparent);
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 40;
+        }
+
+        .clipchat-header-btn {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 8px;
+            transition: all 0.2s;
+            font-size: 18px;
+            color: var(--clipchat-text);
+        }
+
+        .clipchat-header-btn:hover {
+            background: white;
+            transform: scale(1.1);
+        }
+
+        /* Video Content Area */
+        .clipchat-video-content {
+            flex: 1;
+            position: relative;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .clipchat-video-wrapper {
+            flex: 1;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .clipchat-video-frame-large {
+            width: 280px;
+            height: 500px;
+            background: #1a1a1a;
+            border-radius: 36px;
+            padding: 12px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .clipchat-video-screen-large {
+            width: 100%;
+            height: 100%;
+            background: #000;
+            border-radius: 28px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .clipchat-video-screen-large .clipchat-phone-notch {
+            height: 28px;
+            width: 35%;
+        }
+
+        /* CTA Button */
+        .clipchat-cta-container {
+            padding: 24px;
+            background: linear-gradient(to top, white, transparent);
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .clipchat-cta-button {
+            background: var(--clipchat-primary);
+            color: white;
+            border: none;
+            padding: 16px 48px;
+            border-radius: 30px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 10px 20px -5px rgba(99, 102, 241, 0.4);
+            width: 100%;
+            max-width: 280px;
+        }
+
+        .clipchat-cta-button:hover {
+            background: var(--clipchat-primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px -5px rgba(99, 102, 241, 0.5);
+        }
+
+        .clipchat-cta-button:active {
+            transform: translateY(0);
+        }
+
+        /* Chat State */
+        .clipchat-chat-state {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            animation: clipchatFadeIn 0.3s ease;
+        }
+
+        @keyframes clipchatFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Chat Header */
+        .clipchat-chat-header {
+            background: var(--clipchat-bg);
+            border-bottom: 1px solid var(--clipchat-border);
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .clipchat-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid var(--clipchat-primary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .clipchat-header-info {
+            flex: 1;
+        }
+
+        .clipchat-header-name {
+            font-weight: 700;
+            color: var(--clipchat-text);
+            font-size: 16px;
+            margin-bottom: 2px;
+        }
+
+        .clipchat-header-status {
+            font-size: 13px;
+            color: var(--clipchat-text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .clipchat-status-dot {
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .clipchat-chat-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .clipchat-control-btn {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: var(--clipchat-surface);
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--clipchat-text-secondary);
+            transition: all 0.2s;
+            font-size: 18px;
+        }
+
+        .clipchat-control-btn:hover {
+            background: var(--clipchat-border);
+            color: var(--clipchat-text);
+        }
+
+        /* Messages Area */
+        .clipchat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: var(--clipchat-surface);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .clipchat-message {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            font-size: 14px;
+            line-height: 1.5;
+            animation: messageSlide 0.3s ease;
+        }
+
+        @keyframes messageSlide {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .clipchat-message-bot {
+            background: white;
+            color: var(--clipchat-text);
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        .clipchat-message-user {
+            background: var(--clipchat-primary);
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+
+        .clipchat-message-time {
+            font-size: 11px;
+            opacity: 0.7;
+            margin-top: 4px;
+            text-align: right;
+        }
+
+        /* Quick Replies */
+        .clipchat-quick-replies {
+            display: flex;
+            gap: 8px;
+            padding: 12px 20px;
+            overflow-x: auto;
+            background: var(--clipchat-surface);
+            border-top: 1px solid var(--clipchat-border);
+            scrollbar-width: none;
+        }
+
+        .clipchat-quick-replies::-webkit-scrollbar {
+            display: none;
+        }
+
+        .clipchat-quick-reply {
+            background: white;
+            border: 1px solid var(--clipchat-border);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+            color: var(--clipchat-text);
+            font-weight: 500;
+        }
+
+        .clipchat-quick-reply:hover {
+            background: var(--clipchat-primary);
+            color: white;
+            border-color: var(--clipchat-primary);
+            transform: translateY(-1px);
+        }
+
+        /* Input Area */
+        .clipchat-input-area {
+            padding: 16px 20px 20px;
+            background: white;
+            border-top: 1px solid var(--clipchat-border);
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .clipchat-input {
+            flex: 1;
+            border: 1px solid var(--clipchat-border);
+            border-radius: 24px;
+            padding: 12px 20px;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .clipchat-input:focus {
+            border-color: var(--clipchat-primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .clipchat-send-btn {
+            width: 44px;
+            height: 44px;
+            border: none;
+            background: var(--clipchat-primary);
+            color: white;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            font-size: 18px;
+        }
+
+        .clipchat-send-btn:hover {
+            background: var(--clipchat-primary-hover);
+            transform: scale(1.05);
+        }
+
+        .clipchat-send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Minimized State (Floating Button) */
+        .clipchat-minimized {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--clipchat-primary);
+            box-shadow: var(--clipchat-shadow-lg);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: clipchatBounce 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 3px solid white;
+            position: relative;
+        }
+
+        @keyframes clipchatBounce {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .clipchat-minimized::after {
+            content: '💬';
+            font-size: 28px;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+        }
+
+        .clipchat-notification-badge {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            width: 20px;
+            height: 20px;
+            background: var(--clipchat-accent);
+            color: white;
+            border-radius: 50%;
+            font-size: 11px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid white;
+        }
+
+        /* Hidden State */
+        .clipchat-hidden {
+            display: none !important;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 480px) {
+            #clipchat-widget {
+                bottom: 10px;
+                right: 10px;
+                left: 10px;
+            }
+
+            .clipchat-collapsed {
+                width: 140px;
+                height: 250px;
+                float: right;
+            }
+
+            .clipchat-expanded {
+                width: 100%;
+                height: 85vh;
+                max-height: 85vh;
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                border-radius: var(--clipchat-radius) var(--clipchat-radius) 0 0;
+            }
+
+            .clipchat-video-frame-large {
+                width: 240px;
+                height: 420px;
+            }
+
+            .clipchat-minimized {
+                float: right;
+            }
+        }
+
+        /* Accessibility */
+        .clipchat-sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+
+        /* Focus styles */
+        button:focus-visible,
+        input:focus-visible {
+            outline: 2px solid var(--clipchat-primary);
+            outline-offset: 2px;
+        }
+
+        /* Loading State */
+        .clipchat-typing {
+            display: flex;
+            gap: 4px;
+            padding: 12px 16px;
+            background: white;
+            border-radius: 18px;
+            border-bottom-left-radius: 4px;
+            align-self: flex-start;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        .clipchat-typing-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--clipchat-text-secondary);
+            border-radius: 50%;
+            animation: typingBounce 1.4s infinite ease-in-out both;
+        }
+
+        .clipchat-typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .clipchat-typing-dot:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes typingBounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Demo Page Content -->
+    <div class="demo-content">
+        <h1>Welcome to ClipChat Pro</h1>
+        <p>Experience the future of website engagement. Our video-to-chat widget helps you convert visitors into conversations. Scroll down to see the widget in action in the bottom-right corner.</p>
+        <p style="margin-top: 2rem; opacity: 0.8;">Try clicking the video preview to expand, then click "Let's chat" to start the conversation!</p>
+    </div>
+
+    <!-- ClipChat Pro Widget -->
+    <div id="clipchat-widget" role="dialog" aria-label="Chat widget" aria-live="polite">
+        <!-- Widget content injected by JavaScript -->
+    </div>
+
+    <script>
+        /**
+         * ClipChat Pro - Video Intro Chat Bot
+         * Fully self-contained widget with no external dependencies
+         */
+
+        (function() {
+            'use strict';
+
+            // Configuration
+            const CONFIG = {
+                videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4', // Demo video
+                avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop&crop=face',
+                botName: 'Sarah',
+                botTitle: 'Customer Success Manager',
+                greeting: 'Hi there! 👋 I noticed you\'re interested in our services. How can I help you today?',
+                placeholder: 'Ask me anything about our services...',
+                primaryColor: '#6366f1',
+                apiEndpoint: null, // Set to your backend endpoint
+                quickReplies: [
+                    'Book a call',
+                    'Pricing info',
+                    'Product demo',
+                    'Support'
+                ],
+                sessionKey: 'clipchat_session'
+            };
+
+            // State Management
+            const state = {
+                isOpen: false,
+                isExpanded: false,
+                isChatMode: false,
+                isMinimized: false,
+                isMuted: true,
+                messages: [],
+                sessionId: null,
+                unreadCount: 0
+            };
+
+            // DOM Elements
+            let widget, videoElement;
+
+            // Initialize
+            function init() {
+                checkSession();
+                render();
+                setupEventListeners();
+                loadVideoLazy();
+            }
+
+            // Check for existing session
+            function checkSession() {
+                const session = localStorage.getItem(CONFIG.sessionKey);
+                if (session) {
+                    const data = JSON.parse(session);
+                    state.sessionId = data.id;
+                    state.isChatMode = data.isChatMode || false;
+                    state.messages = data.messages || [];
+                    if (state.isChatMode) {
+                        state.unreadCount = 1;
+                    }
+                } else {
+                    state.sessionId = 'session_' + Date.now();
+                }
+            }
+
+            // Save session
+            function saveSession() {
+                localStorage.setItem(CONFIG.sessionKey, JSON.stringify({
+                    id: state.sessionId,
+                    isChatMode: state.isChatMode,
+                    messages: state.messages,
+                    lastActive: Date.now()
+                }));
+            }
+
+            // Render Widget
+            function render() {
+                widget = document.getElementById('clipchat-widget');
+                
+                if (state.isMinimized) {
+                    renderMinimized();
+                } else if (!state.isOpen) {
+                    renderCollapsed();
+                } else {
+                    renderExpanded();
+                }
+            }
+
+            // Render Collapsed State (Video Teaser)
+            function renderCollapsed() {
+                widget.innerHTML = `
+                    <div class="clipchat-collapsed" id="clipchat-collapsed" role="button" tabindex="0" aria-label="Open video chat with ${CONFIG.botName}">
+                        <button class="clipchat-close-collapsed" id="clipchat-close-collapsed" aria-label="Close widget">×</button>
+                        <div class="clipchat-phone-frame">
+                            <div class="clipchat-phone-screen">
+                                <div class="clipchat-phone-notch"></div>
+                                <video 
+                                    class="clipchat-video" 
+                                    id="clipchat-video-collapsed"
+                                    muted 
+                                    loop 
+                                    playsinline
+                                    poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E"
+                                    aria-label="Video introduction"
+                                >
+                                    <source src="${CONFIG.videoUrl}" type="video/mp4">
+                                </video>
+                            </div>
+                        </div>
+                        <div class="clipchat-overlay-label">Watch & Chat</div>
+                    </div>
+                `;
+                
+                setupCollapsedListeners();
+                setupVideo('clipchat-video-collapsed', true);
+            }
+
+            // Render Expanded State
+            function renderExpanded() {
+                widget.innerHTML = `
+                    <div class="clipchat-expanded" id="clipchat-expanded">
+                        ${state.isChatMode ? renderChatContent() : renderVideoContent()}
+                    </div>
+                `;
+                
+                if (state.isChatMode) {
+                    setupChatListeners();
+                    scrollToBottom();
+                } else {
+                    setupVideoListeners();
+                    setupVideo('clipchat-video-expanded', false);
+                }
+            }
+
+            // Render Video Content
+            function renderVideoContent() {
+                return `
+                    <div class="clipchat-video-content">
+                        <div class="clipchat-video-header">
+                            <button class="clipchat-header-btn" id="clipchat-minimize" aria-label="Minimize widget">−</button>
+                            <button class="clipchat-header-btn" id="clipchat-close-expanded" aria-label="Close widget">×</button>
+                        </div>
+                        <div class="clipchat-video-wrapper">
+                            <div class="clipchat-video-frame-large">
+                                <div class="clipchat-video-screen-large">
+                                    <div class="clipchat-phone-notch"></div>
+                                    <video 
+                                        class="clipchat-video" 
+                                        id="clipchat-video-expanded"
+                                        ${state.isMuted ? 'muted' : ''}
+                                        loop 
+                                        playsinline
+                                        aria-label="Video introduction with audio"
+                                    >
+                                        <source src="${CONFIG.videoUrl}" type="video/mp4">
+                                    </video>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="clipchat-cta-container">
+                            <button class="clipchat-cta-button" id="clipchat-cta" aria-label="Start chatting with ${CONFIG.botName}">
+                                Let's chat
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Render Chat Content
+            function renderChatContent() {
+                const messagesHtml = state.messages.map(msg => `
+                    <div class="clipchat-message clipchat-message-${msg.type}">
+                        ${msg.text}
+                        <div class="clipchat-message-time">${msg.time}</div>
+                    </div>
+                `).join('');
+
+                const quickRepliesHtml = CONFIG.quickReplies.map(reply => `
+                    <button class="clipchat-quick-reply" data-reply="${reply}" aria-label="Quick reply: ${reply}">
+                        ${reply}
+                    </button>
+                `).join('');
+
+                return `
+                    <div class="clipchat-chat-state">
+                        <div class="clipchat-chat-header">
+                            <img src="${CONFIG.avatarUrl}" alt="${CONFIG.botName}" class="clipchat-avatar">
+                            <div class="clipchat-header-info">
+                                <div class="clipchat-header-name">${CONFIG.botName}</div>
+                                <div class="clipchat-header-status">
+                                    <span class="clipchat-status-dot"></span>
+                                    Online now
+                                </div>
+                            </div>
+                            <div class="clipchat-chat-controls">
+                                <button class="clipchat-control-btn" id="clipchat-minimize-chat" aria-label="Minimize chat">−</button>
+                                <button class="clipchat-control-btn" id="clipchat-close-chat" aria-label="Close chat">×</button>
+                            </div>
+                        </div>
+                        
+                        <div class="clipchat-messages" id="clipchat-messages" role="log" aria-live="polite" aria-label="Chat messages">
+                            ${messagesHtml}
+                            <div id="clipchat-typing-indicator" class="clipchat-hidden"></div>
+                        </div>
+
+                        <div class="clipchat-quick-replies" role="list" aria-label="Quick replies">
+                            ${quickRepliesHtml}
+                        </div>
+
+                        <div class="clipchat-input-area">
+                            <input 
+                                type="text" 
+                                class="clipchat-input" 
+                                id="clipchat-input"
+                                placeholder="${CONFIG.placeholder}"
+                                aria-label="Type your message"
+                                autocomplete="off"
+                            >
+                            <button class="clipchat-send-btn" id="clipchat-send" aria-label="Send message" disabled>
+                                ➤
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Render Minimized State
+            function renderMinimized() {
+                const badge = state.unreadCount > 0 ? `<div class="clipchat-notification-badge">${state.unreadCount}</div>` : '';
+                widget.innerHTML = `
+                    <div class="clipchat-minimized" id="clipchat-minimized" role="button" tabindex="0" aria-label="Open chat, ${state.unreadCount} unread messages">
+                        ${badge}
+                    </div>
+                `;
+                
+                document.getElementById('clipchat-minimized').addEventListener('click', () => {
+                    state.isMinimized = false;
+                    state.isOpen = true;
+                    state.unreadCount = 0;
+                    render();
+                });
+            }
+
+            // Setup Video
+            function setupVideo(elementId, muted) {
+                setTimeout(() => {
+                    videoElement = document.getElementById(elementId);
+                    if (videoElement) {
+                        videoElement.muted = muted;
+                        videoElement.play().catch(e => {
+                            // Autoplay blocked, will show poster/play button
+                            console.log('Autoplay prevented:', e);
+                        });
+                    }
+                }, 100);
+            }
+
+            // Event Listeners
+            function setupEventListeners() {
+                // Global keyboard shortcuts
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape' && state.isOpen) {
+                        closeWidget();
+                    }
+                });
+            }
+
+            function setupCollapsedListeners() {
+                const collapsed = document.getElementById('clipchat-collapsed');
+                const closeBtn = document.getElementById('clipchat-close-collapsed');
+
+                if (collapsed) {
+                    collapsed.addEventListener('click', (e) => {
+                        if (e.target !== closeBtn) {
+                            expandWidget();
+                        }
+                    });
+                    
+                    collapsed.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            expandWidget();
+                        }
+                    });
+                }
+
+                if (closeBtn) {
+                    closeBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        closeWidget();
+                    });
+                }
+            }
+
+            function setupVideoListeners() {
+                const cta = document.getElementById('clipchat-cta');
+                const minimize = document.getElementById('clipchat-minimize');
+                const close = document.getElementById('clipchat-close-expanded');
+
+                if (cta) {
+                    cta.addEventListener('click', startChat);
+                }
+
+                if (minimize) {
+                    minimize.addEventListener('click', minimizeWidget);
+                }
+
+                if (close) {
+                    close.addEventListener('click', closeWidget);
+                }
+
+                // Unmute video on interaction
+                const video = document.getElementById('clipchat-video-expanded');
+                if (video && state.isMuted) {
+                    video.addEventListener('click', () => {
+                        video.muted = false;
+                        state.isMuted = false;
+                        video.play();
+                    });
+                }
+            }
+
+            function setupChatListeners() {
+                const input = document.getElementById('clipchat-input');
+                const sendBtn = document.getElementById('clipchat-send');
+                const minimize = document.getElementById('clipchat-minimize-chat');
+                const close = document.getElementById('clipchat-close-chat');
+                const quickReplies = document.querySelectorAll('.clipchat-quick-reply');
+
+                // Input handling
+                if (input) {
+                    input.addEventListener('input', () => {
+                        sendBtn.disabled = !input.value.trim();
+                    });
+
+                    input.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter' && input.value.trim()) {
+                            sendMessage(input.value.trim());
+                            input.value = '';
+                            sendBtn.disabled = true;
+                        }
+                    });
+
+                    // Focus input on load
+                    setTimeout(() => input.focus(), 100);
+                }
+
+                if (sendBtn) {
+                    sendBtn.addEventListener('click', () => {
+                        if (input && input.value.trim()) {
+                            sendMessage(input.value.trim());
+                            input.value = '';
+                            sendBtn.disabled = true;
+                        }
+                    });
+                }
+
+                // Quick replies
+                quickReplies.forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        sendMessage(btn.dataset.reply);
+                    });
+                });
+
+                if (minimize) {
+                    minimize.addEventListener('click', minimizeWidget);
+                }
+
+                if (close) {
+                    close.addEventListener('click', closeWidget);
+                }
+            }
+
+            // Actions
+            function expandWidget() {
+                state.isOpen = true;
+                state.isExpanded = true;
+                state.isMuted = false; // Will unmute on expand
+                render();
+            }
+
+            function startChat() {
+                state.isChatMode = true;
+                
+                // Add greeting if no messages
+                if (state.messages.length === 0) {
+                    addMessage('bot', CONFIG.greeting);
+                }
+                
+                saveSession();
+                render();
+            }
+
+            function minimizeWidget() {
+                state.isMinimized = true;
+                state.isOpen = false;
+                render();
+            }
+
+            function closeWidget() {
+                state.isOpen = false;
+                state.isExpanded = false;
+                state.isChatMode = false;
+                state.isMinimized = false;
+                
+                // Pause video
+                if (videoElement) {
+                    videoElement.pause();
+                }
+                
+                render();
+            }
+
+            function sendMessage(text) {
+                // Add user message
+                addMessage('user', text);
+                
+                // Show typing indicator
+                showTyping();
+                
+                // Simulate bot response
+                setTimeout(() => {
+                    hideTyping();
+                    const response = generateResponse(text);
+                    addMessage('bot', response);
+                }, 1000 + Math.random() * 1000);
+            }
+
+            function addMessage(type, text) {
+                const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                state.messages.push({ type, text, time });
+                saveSession();
+                
+                if (state.isChatMode && document.getElementById('clipchat-messages')) {
+                    render(); // Re-render to show new message
+                }
+            }
+
+            function showTyping() {
+                const indicator = document.getElementById('clipchat-typing-indicator');
+                if (indicator) {
+                    indicator.innerHTML = `
+                        <div class="clipchat-typing">
+                            <div class="clipchat-typing-dot"></div>
+                            <div class="clipchat-typing-dot"></div>
+                            <div class="clipchat-typing-dot"></div>
+                        </div>
+                    `;
+                    indicator.classList.remove('clipchat-hidden');
+                    scrollToBottom();
+                }
+            }
+
+            function hideTyping() {
+                const indicator = document.getElementById('clipchat-typing-indicator');
+                if (indicator) {
+                    indicator.classList.add('clipchat-hidden');
+                }
+            }
+
+            function scrollToBottom() {
+                const messages = document.getElementById('clipchat-messages');
+                if (messages) {
+                    setTimeout(() => {
+                        messages.scrollTop = messages.scrollHeight;
+                    }, 50);
+                }
+            }
+
+            function generateResponse(userText) {
+                const lower = userText.toLowerCase();
+                
+                if (lower.includes('price') || lower.includes('cost') || lower.includes('pricing')) {
+                    return 'Our pricing starts at $29/month for the Starter plan. Would you like me to send you a detailed breakdown?';
+                } else if (lower.includes('book') || lower.includes('call') || lower.includes('demo')) {
+                    return 'I\'d love to set up a call! What\'s the best time for you? I\'m available Tuesday through Thursday.';
+                } else if (lower.includes('support') || lower.includes('help')) {
+                    return 'I\'m here to help! Could you tell me more about what you\'re having trouble with?';
+                } else if (lower.includes('hello') || lower.includes('hi') || lower.includes('hey')) {
+                    return 'Hello! Great to meet you. What brings you here today?';
+                } else {
+                    return 'That\'s interesting! Tell me more about what you\'re looking for, and I\'ll make sure to point you in the right direction.';
+                }
+            }
+
+            // Lazy load video
+            function loadVideoLazy() {
+                // Video is loaded when widget is rendered
+            }
+
+            // Start
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
+
+            // Expose API for external control
+            window.ClipChat = {
+                open: expandWidget,
+                close: closeWidget,
+                minimize: minimizeWidget,
+                send: sendMessage,
+                config: CONFIG
+            };
+
+        })();
+    </script>
+</body>
+</html>
