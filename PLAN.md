@@ -210,29 +210,40 @@ Build a SaaS platform where businesses can:
 
 ---
 
-## 🛠️ Tech Stack
+## 🛠️ Tech Stack (Simplified - No React!)
 
 ### Frontend
-- **Dashboard**: React + TypeScript + TailwindCSS
+- **Landing Page (clipchat.com)**: HTML + TailwindCSS (via CDN)
+- **Dashboard (app.clipchat.com)**: HTML + Alpine.js + TailwindCSS
 - **Widget**: Vanilla JS (no framework deps)
-- **Hosting**: Cloudflare Pages
+- **Why?**: Simple, fast, no build step, easy to maintain
 
 ### Backend
 - **API Server**: Cloudflare Workers (Node.js runtime)
-- **Database**: PostgreSQL (Supabase or Neon)
-- **Auth**: Supabase Auth or Clerk
+- **Database + Auth**: Supabase (PostgreSQL + Auth + Storage)
+- **Why?**: Handles auth, database, AND file storage in one service
 
 ### Infrastructure
 - **CDN**: Cloudflare (Pages + Workers + R2 Storage)
-- **Video Hosting**: Cloudflare R2 or AWS S3
+- **Video Hosting**: Cloudflare R2 (S3-compatible, cheap)
 - **AI APIs**: OpenAI GPT-4, Anthropic Claude
 - **Payments**: Stripe
 
 ### DevOps
 - **GitHub**: Repository hosting
-- **CI/CD**: GitHub Actions
+- **CI/CD**: GitHub Actions or manual deploy
 - **Monitoring**: Cloudflare Analytics
-- **Error Tracking**: Sentry
+- **Error Tracking**: Console logs for now
+
+### Why This Stack?
+| Feature | Old Stack | New Stack |
+|---------|-----------|-----------|
+| Learning curve | Steep (React) | Easy (HTML/JS) |
+| Build step | Complex (Node/Webpack) | None (direct deploy) |
+| Auth | Separate service | Built into Supabase |
+| Storage | Separate S3 | Built into Supabase |
+| Cost | $50+/mo | <$10/mo |
+| Dev speed | Slower | Faster |
 
 ---
 
